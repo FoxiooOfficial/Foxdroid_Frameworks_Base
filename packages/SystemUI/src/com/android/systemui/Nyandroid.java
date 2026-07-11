@@ -47,6 +47,9 @@ import android.widget.ImageView;
 import java.util.HashMap;
 import java.util.Random;
 
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.BitmapDrawable;
+
 public class Nyandroid extends Activity {
     final static boolean DEBUG = false;
 
@@ -58,7 +61,7 @@ public class Nyandroid extends Activity {
         static Random sRNG = new Random();
 
         static float lerp(float a, float b, float f) {
-            return (b-a)*f + a;
+            return (b - a ) * f + a;
         }
 
         static float randfrange(float a, float b) {
@@ -74,9 +77,10 @@ public class Nyandroid extends Activity {
             return array[sRNG.nextInt(array.length)];
         }
 
-        public class FlyingCat extends ImageView {
-            public static final float VMAX = 1000.0f;
-            public static final float VMIN = 100.0f;
+        public class FlyingCat extends ImageView
+        {
+            public static final float VMAX = 1000.0f;   // speed max?
+            public static final float VMIN = 100.0f;    // speed min?
 
             public float v, vr;
 
@@ -85,25 +89,34 @@ public class Nyandroid extends Activity {
 
             public ComponentName component;
 
-            public FlyingCat(Context context, AttributeSet as) {
+            public FlyingCat(Context context, AttributeSet as)
+            {
                 super(context, as);
                 setImageResource(R.drawable.nyandroid_anim); // @@@
 
-                if (DEBUG) setBackgroundColor(0x80FF0000);
+                if (DEBUG)
+                    setBackgroundColor(0x80FF0000);
             }
 
-            public String toString() {
+            public String toString()
+            {
                 return String.format("<cat (%.1f, %.1f) (%d x %d)>",
                     getX(), getY(), getWidth(), getHeight());
             }
 
-            public void reset() {
-                final float scale = lerp(0.1f,2f,z);
-                setScaleX(scale); setScaleY(scale);
+            public void reset()
+            {
+                // scale & pos
 
-                setX(-scale*getWidth()+1);
-                setY(randfrange(0, Board.this.getHeight()-scale*getHeight()));
-                v = lerp(VMIN, VMAX, z);
+                final float scale = lerp(0.1f, 2.0f, z) * _Factor * _ScaleMain;
+
+                setScaleX(scale);
+                setScaleY(scale);
+
+                setX(-scale * getWidth() + 1);
+                setY(randfrange(0, Board.this.getHeight() - scale * getHeight()));
+
+                v = lerp(VMIN, VMAX, z) * _Factor; // for sure now its speed
 
                 dist = 0;
 
@@ -117,16 +130,31 @@ public class Nyandroid extends Activity {
         }
 
         TimeAnimator mAnim;
+        float _Factor = 1.0f;
+        // cuz in original sprites, size was 320x320 or 70x70,
+        // in foxdroid is 32x32 and 7x7, should be 10.0f but im using 3.0f :3
+        float _ScaleMain = 3.0f; 
 
-        public Board(Context context, AttributeSet as) {
+        public Board(Context context, AttributeSet as)
+        {
             super(context, as);
+
+                WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+                DisplayMetrics _DM = new DisplayMetrics();
+                wm.getDefaultDisplay().getMetrics(_DM);
+
+                 int _Width = _DM.widthPixels;
+                // int _Height = _DM.heightPixels;
+
+                _Factor = (float)_Width / 480.0f;
 
             setLayerType(View.LAYER_TYPE_HARDWARE, null);
             setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
             setBackgroundColor(0xFF003366);
         }
 
-        private void reset() {
+        private void reset()
+        {
 //            android.util.Log.d("Nyandroid", "board reset");
             removeAllViews();
 
@@ -134,34 +162,57 @@ public class Nyandroid extends Activity {
                         ViewGroup.LayoutParams.WRAP_CONTENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT);
 
-            if (FIXED_STARS) {
-                for(int i=0; i<20; i++) {
+            if (FIXED_STARS)
+            {
+                for(int i = 0; i < 20; i++)
+                {
                     ImageView fixedStar = new ImageView(getContext(), null);
-                    if (DEBUG) fixedStar.setBackgroundColor(0x8000FF80);
+
+                    if (DEBUG)
+                        fixedStar.setBackgroundColor(0x8000FF80);
+
                     fixedStar.setImageResource(R.drawable.star_anim); // @@@
-                    addView(fixedStar, wrap);
-                    final float scale = randfrange(0.1f, 1f);
-                    fixedStar.setScaleX(scale); fixedStar.setScaleY(scale);
+                        addView(fixedStar, wrap);
+
+                    // scale & pos
+
+                    final float scale = randfrange(0.1f, 1.0f) * _Factor * _ScaleMain;
+
+                    fixedStar.setScaleX(scale);
+                    fixedStar.setScaleY(scale);
+
                     fixedStar.setX(randfrange(0, getWidth()));
                     fixedStar.setY(randfrange(0, getHeight()));
-                    final AnimationDrawable anim = (AnimationDrawable) fixedStar.getDrawable();
-                    postDelayed(new Runnable() { 
-                        public void run() {
+
+                    final AnimationDrawable anim = (AnimationDrawable)fixedStar.getDrawable();
+ 
+                    postDelayed(new Runnable()
+                    { 
+                        public void run()
+                        {
                             anim.start();
                         }}, (int) randfrange(0, 1000));
                 }
             }
 
-            for(int i=0; i<NUM_CATS; i++) {
+            for(int i=0; i < NUM_CATS; i++)
+            {
                 FlyingCat nv = new FlyingCat(getContext(), null);
                 addView(nv, wrap);
-                nv.z = ((float)i/NUM_CATS);
+
+                nv.z = ((float)i / NUM_CATS);
                 nv.z *= nv.z;
+
                 nv.reset();
+
                 nv.setX(randfrange(0,Board.this.getWidth()));
+
                 final AnimationDrawable anim = (AnimationDrawable) nv.getDrawable();
-                postDelayed(new Runnable() { 
-                    public void run() {
+                
+                postDelayed(new Runnable()
+                { 
+                    public void run()
+                    {
                         anim.start();
                     }}, (int) randfrange(0, 1000));
             }
@@ -169,19 +220,27 @@ public class Nyandroid extends Activity {
             if (mAnim != null) {
                 mAnim.cancel();
             }
+
             mAnim = new TimeAnimator();
-            mAnim.setTimeListener(new TimeAnimator.TimeListener() {
+            mAnim.setTimeListener(new TimeAnimator.TimeListener()
+            {
                 public void onTimeUpdate(TimeAnimator animation, long totalTime, long deltaTime) {
                     // setRotation(totalTime * 0.01f); // not as cool as you would think
 //                    android.util.Log.d("Nyandroid", "t=" + totalTime);
 
-                    for (int i=0; i<getChildCount(); i++) {
+                    for (int i=0; i<getChildCount(); i++)
+                    {
                         View v = getChildAt(i);
-                        if (!(v instanceof FlyingCat)) continue;
-                        FlyingCat nv = (FlyingCat) v;
+                        if (!(v instanceof FlyingCat))
+                            continue;
+
+                        FlyingCat nv = (FlyingCat)v;
+
                         nv.update(deltaTime / 1000f);
+
                         final float catWidth = nv.getWidth() * nv.getScaleX();
                         final float catHeight = nv.getHeight() * nv.getScaleY();
+
                         if (   nv.getX() + catWidth < -2
                             || nv.getX() > getWidth() + 2
                             || nv.getY() + catHeight < -2
