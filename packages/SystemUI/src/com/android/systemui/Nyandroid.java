@@ -79,7 +79,7 @@ public class Nyandroid extends Activity {
 
         public class FlyingCat extends ImageView
         {
-            public static final float VMAX = 1000.0f;   // speed max?
+            public static final float VMAX = 600.0f;    // speed max?
             public static final float VMIN = 100.0f;    // speed min?
 
             public float v, vr;
@@ -133,7 +133,7 @@ public class Nyandroid extends Activity {
         float _Factor = 1.0f;
         // cuz in original sprites, size was 320x320 or 70x70,
         // in foxdroid is 32x32 and 7x7, should be 10.0f but im using 3.0f :3
-        float _ScaleMain = 3.0f; 
+        float _ScaleMain = 4.5f; 
 
         public Board(Context context, AttributeSet as)
         {
